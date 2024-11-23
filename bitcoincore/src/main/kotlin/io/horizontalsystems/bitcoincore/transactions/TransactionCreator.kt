@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.BitcoinCore.CoreError
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
@@ -13,9 +14,36 @@ class TransactionCreator(
     private val builder: TransactionBuilder,
     private val processor: PendingTransactionProcessor,
     private val transactionSender: TransactionSender,
-    private val transactionSigner: TransactionSigner,
+    private val transactionSigner: TransactionSigner?,
     private val bloomFilterManager: BloomFilterManager
 ) {
+    @Throws
+    fun sign(
+        toAddress: String,
+        memo: String?,
+        value: Long,
+        feeRate: Int,
+        senderPay: Boolean,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
+    ): FullTransaction {
+        if (transactionSigner == null) throw CoreError.ReadOnlyCore
+        val mutableTransaction = builder.buildTransaction(
+            toAddress = toAddress,
+            memo = memo,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled
+        )
+        transactionSigner.sign(mutableTransaction)
+        return mutableTransaction.build()
+    }
 
     @Throws
     fun create(
@@ -59,6 +87,7 @@ class TransactionCreator(
     }
 
     fun create(mutableTransaction: MutableTransaction): FullTransaction {
+        if (transactionSigner == null) throw CoreError.ReadOnlyCore
         transactionSigner.sign(mutableTransaction)
 
         val fullTransaction = mutableTransaction.build()
@@ -67,7 +96,7 @@ class TransactionCreator(
         return fullTransaction
     }
 
-    private fun processAndSend(transaction: FullTransaction): FullTransaction {
+    fun processAndSend(transaction: FullTransaction): FullTransaction {
         transactionSender.canSendTransaction()
 
         try {

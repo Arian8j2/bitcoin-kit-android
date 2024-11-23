@@ -209,6 +209,54 @@ class BitcoinCore(
         ) ?: throw CoreError.ReadOnlyCore
     }
 
+    fun sendInfoWithSpecificOutputs(
+        value: Long,
+        address: String? = null,
+        memo: String?,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>
+    ): BitcoinSendInfo {
+        return transactionFeeCalculator?.sendInfo(
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            toAddress = address,
+            memo = memo,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData
+        ) ?: throw CoreError.ReadOnlyCore
+    }
+
+    fun sign(
+        address: String,
+        memo: String?,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
+    ): FullTransaction {
+        return transactionCreator?.sign(
+            toAddress = address,
+            memo = memo,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled
+        ) ?: throw CoreError.ReadOnlyCore
+    }
+
+    fun publish(transaction: FullTransaction) {
+        transactionCreator?.processAndSend(transaction)
+    }
+
     fun send(
         address: String,
         memo: String?,

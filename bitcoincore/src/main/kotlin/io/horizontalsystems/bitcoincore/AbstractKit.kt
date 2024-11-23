@@ -88,6 +88,44 @@ abstract class AbstractKit {
         )
     }
 
+    fun sendInfoWithSpecificOutputs(
+        value: Long,
+        address: String? = null,
+        memo: String?,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>
+    ): BitcoinSendInfo {
+        return bitcoinCore.sendInfoWithSpecificOutputs(
+            value = value,
+            address = address,
+            memo = memo,
+            senderPay = senderPay,
+            feeRate = feeRate,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData
+        )
+    }
+
+    fun sign(
+        address: String,
+        memo: String?,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
+    ): FullTransaction {
+        return bitcoinCore.sign(address, memo, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
+    }
+
+    fun publish(transaction: FullTransaction) {
+        return bitcoinCore.publish(transaction)
+    }
+
     fun send(
         address: String,
         memo: String?,
