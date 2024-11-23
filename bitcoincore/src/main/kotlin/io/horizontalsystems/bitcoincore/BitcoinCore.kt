@@ -209,6 +209,39 @@ class BitcoinCore(
         ) ?: throw CoreError.ReadOnlyCore
     }
 
+    fun sign(
+        address: String,
+        memo: String?,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutputInfo>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
+    ): FullTransaction {
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
+        return transactionCreator?.sign(
+            toAddress = address,
+            memo = memo,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = outputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled
+        ) ?: throw CoreError.ReadOnlyCore
+    }
+
+    fun publish(transaction: FullTransaction) {
+        transactionCreator?.processAndSend(transaction)
+    }
+
     fun send(
         address: String,
         memo: String?,

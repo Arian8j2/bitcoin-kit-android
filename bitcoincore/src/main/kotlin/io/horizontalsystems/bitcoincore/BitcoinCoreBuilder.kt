@@ -448,60 +448,53 @@ class BitcoinCoreBuilder {
         val pendingTransactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
         val transactionDataSorterFactory = TransactionDataSorterFactory()
 
-        var dustCalculator: DustCalculator? = null
-        var transactionSizeCalculator: TransactionSizeCalculator? = null
-        var transactionFeeCalculator: TransactionFeeCalculator? = null
-        var transactionSender: TransactionSender? = null
-        var transactionCreator: TransactionCreator? = null
-        var replacementTransactionBuilder: ReplacementTransactionBuilder? = null
+        val transactionSizeCalculatorInstance = TransactionSizeCalculator()
+        val dustCalculatorInstance = DustCalculator(network.dustRelayTxFee, transactionSizeCalculatorInstance)
+        val recipientSetter = RecipientSetter(addressConverter, pluginManager)
+        val outputSetter = OutputSetter(transactionDataSorterFactory)
+        val inputSetter = InputSetter(
+            unspentOutputSelector,
+            publicKeyManager,
+            addressConverter,
+            purpose.scriptType,
+            transactionSizeCalculatorInstance,
+            pluginManager,
+            dustCalculatorInstance,
+            transactionDataSorterFactory
+        )
+        val lockTimeSetter = LockTimeSetter(storage)
+        val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, lockTimeSetter)
+        val transactionFeeCalculator = TransactionFeeCalculator(
+            recipientSetter,
+            inputSetter,
+            addressConverter,
+            publicKeyManager,
+            purpose.scriptType,
+        )
+        val transactionSendTimer = TransactionSendTimer(60)
+        val transactionSenderInstance = TransactionSender(
+            pendingTransactionSyncer,
+            peerManager,
+            initialDownload,
+            storage,
+            transactionSendTimer,
+            sendType,
+            TransactionSerializer
+        )
 
-        if (privateWallet != null) {
+        val dustCalculator = dustCalculatorInstance
+        val transactionSizeCalculator = transactionSizeCalculatorInstance
+        val transactionSender = transactionSenderInstance
+
+        transactionSendTimer.listener = transactionSender
+        val replacementTransactionBuilder = ReplacementTransactionBuilder(
+            storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager, conflictsResolver, lockTimeSetter
+        )
+        val transactionCreator = privateWallet?.let {
             val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
             val schnorrInputSigner = SchnorrInputSigner(privateWallet)
-            val transactionSizeCalculatorInstance = TransactionSizeCalculator()
-            val dustCalculatorInstance = DustCalculator(network.dustRelayTxFee, transactionSizeCalculatorInstance)
-            val recipientSetter = RecipientSetter(addressConverter, pluginManager)
-            val outputSetter = OutputSetter(transactionDataSorterFactory)
-            val inputSetter = InputSetter(
-                unspentOutputSelector,
-                publicKeyManager,
-                addressConverter,
-                purpose.scriptType,
-                transactionSizeCalculatorInstance,
-                pluginManager,
-                dustCalculatorInstance,
-                transactionDataSorterFactory
-            )
-            val lockTimeSetter = LockTimeSetter(storage)
-            val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, lockTimeSetter)
-            transactionFeeCalculator = TransactionFeeCalculator(
-                recipientSetter,
-                inputSetter,
-                addressConverter,
-                publicKeyManager,
-                purpose.scriptType,
-            )
-            val transactionSendTimer = TransactionSendTimer(60)
-            val transactionSenderInstance = TransactionSender(
-                pendingTransactionSyncer,
-                peerManager,
-                initialDownload,
-                storage,
-                transactionSendTimer,
-                sendType,
-                TransactionSerializer
-            )
-
-            dustCalculator = dustCalculatorInstance
-            transactionSizeCalculator = transactionSizeCalculatorInstance
-            transactionSender = transactionSenderInstance
-
-            transactionSendTimer.listener = transactionSender
             val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
-            transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, signer, bloomFilterManager)
-            replacementTransactionBuilder = ReplacementTransactionBuilder(
-                storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager, conflictsResolver, lockTimeSetter
-            )
+            TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, signer, bloomFilterManager)
         }
 
         val bitcoinCore = BitcoinCore(
