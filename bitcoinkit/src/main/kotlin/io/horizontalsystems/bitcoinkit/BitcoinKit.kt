@@ -329,7 +329,13 @@ class BitcoinKit : AbstractKit {
         }
 
         NetworkType.TestNet -> {
-            BCoinApi("https://btc-testnet.blocksdecoded.com/api")
+            if (syncMode !is SyncMode.Blockchair) {
+                throw Exception("TestNet only works with blockchair api sync mode")
+            }
+            val blockchairApi = BlockchairApi(network.blockchairChainId)
+            val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+            val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
+            blockchairProvider
         }
 
         NetworkType.RegTest -> {
