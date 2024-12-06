@@ -490,12 +490,12 @@ class BitcoinCoreBuilder {
         val replacementTransactionBuilder = ReplacementTransactionBuilder(
             storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager, conflictsResolver, lockTimeSetter
         )
-        val transactionCreator = privateWallet?.let {
+        val transactionSigner = privateWallet?.let {
             val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
             val schnorrInputSigner = SchnorrInputSigner(privateWallet)
-            val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
-            TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, signer, bloomFilterManager)
+            TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
         }
+        val transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, transactionSigner, bloomFilterManager)
 
         val bitcoinCore = BitcoinCore(
             storage,
