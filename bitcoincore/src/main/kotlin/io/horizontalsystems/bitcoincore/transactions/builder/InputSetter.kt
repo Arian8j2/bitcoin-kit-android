@@ -62,7 +62,8 @@ class InputSetter(
         senderPay: Boolean,
         unspentOutputs: List<UnspentOutput>?,
         sortType: TransactionDataSortType,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        allowChangeAddress: Boolean = true
     ): OutputInfo {
         val unspentOutputInfo: SelectedUnspentOutputInfo
         if (unspentOutputs != null) {
@@ -108,7 +109,11 @@ class InputSetter(
         // Add change output if needed
         var changeInfo: ChangeInfo? = null
         unspentOutputInfo.changeValue?.let { changeValue ->
-            val changePubKey = publicKeyManager.changePublicKey()
+            val changePubKey = if (allowChangeAddress) {
+                publicKeyManager.changePublicKey()
+            } else {
+                publicKeyManager.receivePublicKey()
+            }
             val changeAddress = addressConverter.convert(changePubKey, changeScriptType)
 
             mutableTransaction.changeAddress = changeAddress

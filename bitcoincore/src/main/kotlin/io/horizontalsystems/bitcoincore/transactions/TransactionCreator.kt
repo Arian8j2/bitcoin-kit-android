@@ -39,7 +39,8 @@ class TransactionCreator(
             sortType = sortType,
             unspentOutputs = unspentOutputs,
             pluginData = pluginData,
-            rbfEnabled = rbfEnabled
+            rbfEnabled = rbfEnabled,
+            allowChangeAddress = false
         )
         transactionSigner.sign(mutableTransaction)
         return mutableTransaction.build()
