@@ -48,6 +48,7 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
 import io.horizontalsystems.bitcoincore.transactions.TransactionCreator
 import io.horizontalsystems.bitcoincore.transactions.TransactionFeeCalculator
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
+import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 import io.horizontalsystems.bitcoincore.utils.DirectExecutor
@@ -229,7 +230,7 @@ class BitcoinCore(
         ) ?: throw CoreError.ReadOnlyCore
     }
 
-    fun sign(
+    fun buildTransaction(
         address: String,
         memo: String?,
         value: Long,
@@ -239,8 +240,8 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean
-    ): FullTransaction {
-        return transactionCreator?.sign(
+    ): MutableTransaction? {
+        return transactionCreator?.build(
             toAddress = address,
             memo = memo,
             value = value,
@@ -250,7 +251,11 @@ class BitcoinCore(
             unspentOutputs = unspentOutputs,
             pluginData = pluginData,
             rbfEnabled = rbfEnabled
-        ) ?: throw CoreError.ReadOnlyCore
+        )
+    }
+
+    fun sign(transaction: MutableTransaction) {
+        transactionCreator?.sign(transaction)
     }
 
     fun publish(transaction: FullTransaction) {

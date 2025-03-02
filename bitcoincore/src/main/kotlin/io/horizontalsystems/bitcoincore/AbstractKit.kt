@@ -15,6 +15,7 @@ import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
+import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.reactivex.Single
 
@@ -108,7 +109,7 @@ abstract class AbstractKit {
         )
     }
 
-    fun sign(
+    fun buildTransaction(
         address: String,
         memo: String?,
         value: Long,
@@ -118,12 +119,16 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean
-    ): FullTransaction {
-        return bitcoinCore.sign(address, memo, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
+    ): MutableTransaction? {
+        return bitcoinCore.buildTransaction(address, memo, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
+    }
+
+    fun sign(transaction: MutableTransaction) {
+        bitcoinCore.sign(transaction)
     }
 
     fun publish(transaction: FullTransaction) {
-        return bitcoinCore.publish(transaction)
+        bitcoinCore.publish(transaction)
     }
 
     fun send(

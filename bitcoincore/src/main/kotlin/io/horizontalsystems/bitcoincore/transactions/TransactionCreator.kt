@@ -18,7 +18,12 @@ class TransactionCreator(
     private val bloomFilterManager: BloomFilterManager
 ) {
     @Throws
-    fun sign(
+    fun sign(transaction: MutableTransaction) {
+        if (transactionSigner == null) throw CoreError.ReadOnlyCore
+        transactionSigner.sign(transaction)
+    }
+
+    fun build(
         toAddress: String,
         memo: String?,
         value: Long,
@@ -28,9 +33,8 @@ class TransactionCreator(
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean
-    ): FullTransaction {
-        if (transactionSigner == null) throw CoreError.ReadOnlyCore
-        val mutableTransaction = builder.buildTransaction(
+    ): MutableTransaction {
+        return builder.buildTransaction(
             toAddress = toAddress,
             memo = memo,
             value = value,
@@ -42,8 +46,6 @@ class TransactionCreator(
             rbfEnabled = rbfEnabled,
             allowChangeAddress = false
         )
-        transactionSigner.sign(mutableTransaction)
-        return mutableTransaction.build()
     }
 
     @Throws
