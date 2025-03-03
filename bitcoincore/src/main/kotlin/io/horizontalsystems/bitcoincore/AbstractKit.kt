@@ -89,26 +89,6 @@ abstract class AbstractKit {
         )
     }
 
-    fun sendInfoWithSpecificOutputs(
-        value: Long,
-        address: String? = null,
-        memo: String?,
-        senderPay: Boolean = true,
-        feeRate: Int,
-        unspentOutputs: List<UnspentOutput>?,
-        pluginData: Map<Byte, IPluginData>
-    ): BitcoinSendInfo {
-        return bitcoinCore.sendInfoWithSpecificOutputs(
-            value = value,
-            address = address,
-            memo = memo,
-            senderPay = senderPay,
-            feeRate = feeRate,
-            unspentOutputs = unspentOutputs,
-            pluginData = pluginData
-        )
-    }
-
     fun buildTransaction(
         address: String,
         memo: String?,

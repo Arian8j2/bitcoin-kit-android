@@ -210,26 +210,6 @@ class BitcoinCore(
         ) ?: throw CoreError.ReadOnlyCore
     }
 
-    fun sendInfoWithSpecificOutputs(
-        value: Long,
-        address: String? = null,
-        memo: String?,
-        senderPay: Boolean = true,
-        feeRate: Int,
-        unspentOutputs: List<UnspentOutput>?,
-        pluginData: Map<Byte, IPluginData>
-    ): BitcoinSendInfo {
-        return transactionFeeCalculator?.sendInfo(
-            value = value,
-            feeRate = feeRate,
-            senderPay = senderPay,
-            toAddress = address,
-            memo = memo,
-            unspentOutputs = unspentOutputs,
-            pluginData = pluginData
-        ) ?: throw CoreError.ReadOnlyCore
-    }
-
     fun buildTransaction(
         address: String,
         memo: String?,
